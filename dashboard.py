@@ -8,8 +8,9 @@ st.set_page_config(page_title="HIIT MB", page_icon="💪", layout="wide")
 
 # --- CONEXIÓN A SUPABASE ---
 # Pega aquí las credenciales que copiaste (entre las comillas)
-SUPABASE_URL = "https://ggwrnhgcyzaezxyzugsl.supabase.co"
-SUPABASE_KEY = "sb_publishable_oJkkDHIpKJ-rg5EXSwUKKg_wCRdL13T"
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+
 
 # Creamos el "cliente" para conectarnos
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
