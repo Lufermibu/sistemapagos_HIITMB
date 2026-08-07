@@ -180,7 +180,7 @@ elif vista == "Panel Administrador":
                     
                     with colA:
                         numero_limpio = tel_cliente.replace("-", "").replace(" ", "")
-                        mensaje = f"Hola {nom_cliente}. Le escribo del local para recordarle que su mensualidad vence el {fecha_bonita}. ¡Lindo día!"
+                        mensaje = f"¡Hola {nom_cliente}!. Te enviamos esta notificación para recordarte que tu próxima mensualidad se debe renovar el día {fecha_bonita}. ¡Gracias por ser parte del equipo HIIT! ♡"
                         mensaje_codificado = urllib.parse.quote(mensaje)
                         link_wa = f"https://wa.me/52{numero_limpio}?text={mensaje_codificado}"
                         
