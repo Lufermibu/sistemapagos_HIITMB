@@ -2,6 +2,27 @@ import streamlit as st
 from supabase import create_client, Client
 import pandas as pd
 from datetime import datetime, timedelta
+import calendar
+import urllib.parse
+
+# --- FUNCIÓN AUXILIAR PARA CÁLCULO DE MESES EXACTOS ---
+def calcular_proximo_mes(fecha_inicial):
+    nuevo_mes = fecha_inicial.month + 1
+    nuevo_anio = fecha_inicial.year
+    
+    # Si pasamos de diciembre, reiniciamos a enero y sumamos un año
+    if nuevo_mes > 12:
+        nuevo_mes = 1
+        nuevo_anio += 1
+    
+    # Averiguamos cuántos días tiene el nuevo mes (para evitar el error del "31 de febrero")
+    ultimo_dia_nuevo_mes = calendar.monthrange(nuevo_anio, nuevo_mes)[1]
+    
+    # Mantenemos el mismo día de pago, a menos que el nuevo mes sea más corto
+    nuevo_dia = min(fecha_inicial.day, ultimo_dia_nuevo_mes)
+    
+    return fecha_inicial.replace(year=nuevo_anio, month=nuevo_mes, day=nuevo_dia)
+
 
 # Configuración de la página
 st.set_page_config(page_title="HIIT MB", page_icon="💪", layout="wide")
@@ -10,7 +31,6 @@ st.set_page_config(page_title="HIIT MB", page_icon="💪", layout="wide")
 # Pega aquí las credenciales que copiaste (entre las comillas)
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-
 
 # Creamos el "cliente" para conectarnos
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -55,6 +75,7 @@ if vista == "Vista Cliente":
                 st.error("No se encontró ningún usuario con ese número.")
         else:
             st.warning("Por favor ingresa un número de teléfono.")
+
 # --- PANTALLA 2: ADMINISTRADOR---
 elif vista == "Panel Administrador":
     st.title("⚙️ Panel de Control")
@@ -82,7 +103,8 @@ elif vista == "Panel Administrador":
                 
                 if submit:
                     if nombre and telefono:
-                        vencimiento_base = fecha_pago + timedelta(days=30)
+                        # USAMOS LA NUEVA LÓGICA DE MES EXACTO
+                        vencimiento_base = calcular_proximo_mes(fecha_pago)
                         vencimiento_final = vencimiento_base + timedelta(days=dias_ajuste)
                         
                         fecha_pago_db = fecha_pago.strftime("%Y-%m-%d")
@@ -103,7 +125,7 @@ elif vista == "Panel Administrador":
                     else:
                         st.error("Por favor llena al menos el nombre y el teléfono.")
         
-       # --- PESTAÑA 2: LA TABLA DE CLIENTES ---
+        # --- PESTAÑA 2: LA TABLA DE CLIENTES ---
         with tab2:
             st.write("Aquí puedes ver a todos los clientes registrados.")
             
@@ -123,8 +145,6 @@ elif vista == "Panel Administrador":
                 
                 st.divider()
                 st.subheader("⚡ Acciones Rápidas")
-                
-                import urllib.parse
                 
                 opciones = {f"{fila['nombre']} - {fila['telefono']}": fila for fila in datos_todos}
                 cliente_elegido = st.selectbox("Selecciona un cliente para interactuar:", list(opciones.keys()))
@@ -150,7 +170,8 @@ elif vista == "Panel Administrador":
                         dias_ajuste = st.number_input("Días de ajuste", value=0, step=1)
                         
                         if st.button("Guardar Renovación"):
-                            vencimiento_base = nueva_fecha_pago + timedelta(days=30)
+                            # USAMOS LA NUEVA LÓGICA DE MES EXACTO AQUÍ TAMBIÉN
+                            vencimiento_base = calcular_proximo_mes(nueva_fecha_pago)
                             vencimiento_final = vencimiento_base + timedelta(days=dias_ajuste)
                             
                             # Usamos .update() en lugar de .insert() para sobreescribir sus datos
@@ -197,3 +218,5 @@ elif vista == "Panel Administrador":
                             confirmar_borrado(id_cliente, nom_cliente)
             else:
                 st.info("Aún no hay clientes registrados en la nube.")
+    elif clave != "":
+        st.error("Clave incorrecta. Acceso denegado.")
