@@ -103,30 +103,60 @@ elif vista == "Panel Administrador":
                     else:
                         st.error("Por favor llena al menos el nombre y el teléfono.")
         
-        # --- PESTAÑA 2: LA TABLA DE CLIENTES ---
+       # --- PESTAÑA 2: LA TABLA DE CLIENTES ---
         with tab2:
-            st.write("Aquí puedes ver a todos los clientes registrados en la base de datos.")
+            st.write("Aquí puedes ver a todos los clientes registrados.")
             
-            # Botón para recargar los datos
             if st.button("🔄 Actualizar lista"):
                 pass 
             
-            # Descargamos todos los datos de Supabase
             respuesta_todos = supabase.table('clientes').select('*').order('id', desc=True).execute()
             datos_todos = respuesta_todos.data
             
             if len(datos_todos) > 0:
-                # Convertimos los datos a un formato de tabla
                 df_todos = pd.DataFrame(datos_todos)
                 
-                # Seleccionamos y renombramos las columnas para que se vean presentables
                 df_mostrar = df_todos[['nombre', 'telefono', 'monto_pagado', 'fecha_pago', 'fecha_vencimiento']]
                 df_mostrar.columns = ['Nombre', 'Teléfono', 'Monto ($)', 'Fecha de Pago', 'Vencimiento']
                 
-                # Mostramos la tabla interactiva
                 st.dataframe(df_mostrar, use_container_width=True)
+                
+                st.divider()
+                st.subheader("⚡ Acciones Rápidas")
+                
+                # Creamos un menú desplegable para elegir al cliente
+                import urllib.parse
+                
+                opciones = {f"{fila['nombre']} - {fila['telefono']}": fila for fila in datos_todos}
+                cliente_elegido = st.selectbox("Selecciona un cliente para interactuar:", list(opciones.keys()))
+                
+                if cliente_elegido:
+                    datos_cliente = opciones[cliente_elegido]
+                    id_cliente = datos_cliente['id']
+                    nom_cliente = datos_cliente['nombre']
+                    tel_cliente = datos_cliente['telefono']
+                    vence_cliente = datos_cliente['fecha_vencimiento']
+                    
+                    # Convertimos la fecha a formato Día/Mes/Año para el mensaje
+                    fecha_obj = datetime.strptime(vence_cliente, "%Y-%m-%d")
+                    fecha_bonita = fecha_obj.strftime("%d/%m/%Y")
+                    
+                    colA, colB = st.columns(2)
+                    
+                    with colA:
+                        # Preparamos el link de WhatsApp (asumiendo lada +52 de México)
+                        numero_limpio = tel_cliente.replace("-", "").replace(" ", "")
+                        mensaje = f"Hola {nom_cliente}. Le escribo del local para recordarle que su mensualidad vence el {fecha_bonita}. ¡Lindo día!"
+                        mensaje_codificado = urllib.parse.quote(mensaje)
+                        link_wa = f"https://wa.me/52{numero_limpio}?text={mensaje_codificado}"
+                        
+                        st.link_button("📲 Avisar por WhatsApp", link_wa)
+                        
+                    with colB:
+                        # Botón para borrar de la base de datos
+                        if st.button(f"❌ Eliminar a {nom_cliente}"):
+                            # Le decimos a Supabase que borre la fila con ese ID
+                            supabase.table('clientes').delete().eq('id', id_cliente).execute()
+                            st.success(f"¡{nom_cliente} ha sido eliminado! Haz clic en 'Actualizar lista' para ver los cambios.")
             else:
                 st.info("Aún no hay clientes registrados en la nube.")
-                
-    elif clave != "":
-        st.error("Clave incorrecta. Acceso denegado.")
