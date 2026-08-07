@@ -124,7 +124,6 @@ elif vista == "Panel Administrador":
                 st.divider()
                 st.subheader("⚡ Acciones Rápidas")
                 
-                # Creamos un menú desplegable para elegir al cliente
                 import urllib.parse
                 
                 opciones = {f"{fila['nombre']} - {fila['telefono']}": fila for fila in datos_todos}
@@ -136,27 +135,65 @@ elif vista == "Panel Administrador":
                     nom_cliente = datos_cliente['nombre']
                     tel_cliente = datos_cliente['telefono']
                     vence_cliente = datos_cliente['fecha_vencimiento']
+                    monto_previo = datos_cliente['monto_pagado']
                     
-                    # Convertimos la fecha a formato Día/Mes/Año para el mensaje
                     fecha_obj = datetime.strptime(vence_cliente, "%Y-%m-%d")
                     fecha_bonita = fecha_obj.strftime("%d/%m/%Y")
                     
-                    colA, colB = st.columns(2)
+                    # --- FUNCIÓN 1: VENTANA PARA RENOVAR PAGO ---
+                    @st.dialog("🔄 Renovar Mensualidad")
+                    def renovar_pago(id_renovar, nombre_renovar, monto_sugerido):
+                        st.write(f"Registrar nuevo pago para **{nombre_renovar}**")
+                        
+                        nuevo_monto = st.number_input("Monto pagado", min_value=0.0, value=float(monto_sugerido), step=50.0)
+                        nueva_fecha_pago = st.date_input("Fecha de pago", datetime.now())
+                        dias_ajuste = st.number_input("Días de ajuste", value=0, step=1)
+                        
+                        if st.button("Guardar Renovación"):
+                            vencimiento_base = nueva_fecha_pago + timedelta(days=30)
+                            vencimiento_final = vencimiento_base + timedelta(days=dias_ajuste)
+                            
+                            # Usamos .update() en lugar de .insert() para sobreescribir sus datos
+                            supabase.table('clientes').update({
+                                "monto_pagado": nuevo_monto,
+                                "fecha_pago": nueva_fecha_pago.strftime("%Y-%m-%d"),
+                                "dias_ajuste": dias_ajuste,
+                                "fecha_vencimiento": vencimiento_final.strftime("%Y-%m-%d")
+                            }).eq('id', id_renovar).execute()
+                            
+                            st.success("¡Pago actualizado!")
+                            st.rerun()
+
+                    # --- FUNCIÓN 2: VENTANA EMERGENTE DE BORRADO ---
+                    @st.dialog("⚠️ Confirmar Borrado")
+                    def confirmar_borrado(id_borrar, nombre_borrar):
+                        st.warning(f"¿Estás segura de que quieres eliminar a **{nombre_borrar}**?")
+                        st.write("Esta acción no se puede deshacer y borrará su historial de pagos.")
+                        
+                        if st.button("Sí, eliminar permanentemente"):
+                            supabase.table('clientes').delete().eq('id', id_borrar).execute()
+                            st.rerun() 
+                    # ------------------------------------------------
+                    
+                    # Dividimos en 3 columnas para que los botones quepan bien
+                    colA, colB, colC = st.columns(3)
                     
                     with colA:
-                        # Preparamos el link de WhatsApp (asumiendo lada +52 de México)
                         numero_limpio = tel_cliente.replace("-", "").replace(" ", "")
-                        mensaje = f"Hola {nom_cliente}. Le escribo de HIIT MB para recordarle que su mensualidad vence el {fecha_bonita}. ¡Lindo día! (Este es un mensaje automatizado) 🤖💪✨"
+                        mensaje = f"Hola {nom_cliente}. Le escribo del local para recordarle que su mensualidad vence el {fecha_bonita}. ¡Lindo día!"
                         mensaje_codificado = urllib.parse.quote(mensaje)
                         link_wa = f"https://wa.me/52{numero_limpio}?text={mensaje_codificado}"
                         
-                        st.link_button("📲 Avisar por WhatsApp", link_wa)
+                        st.link_button("📲 WhatsApp", link_wa)
                         
                     with colB:
-                        # Botón para borrar de la base de datos
-                        if st.button(f"❌ Eliminar a {nom_cliente}"):
-                            # Le decimos a Supabase que borre la fila con ese ID
-                            supabase.table('clientes').delete().eq('id', id_cliente).execute()
-                            st.success(f"¡{nom_cliente} ha sido eliminado! Haz clic en 'Actualizar lista' para ver los cambios.")
+                        # Botón que llama a la ventana de renovación
+                        if st.button("🔄 Renovar"):
+                            renovar_pago(id_cliente, nom_cliente, monto_previo)
+                            
+                    with colC:
+                        # Botón que llama a la ventana de confirmación
+                        if st.button("❌ Eliminar"):
+                            confirmar_borrado(id_cliente, nom_cliente)
             else:
                 st.info("Aún no hay clientes registrados en la nube.")
