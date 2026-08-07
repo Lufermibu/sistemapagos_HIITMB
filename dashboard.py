@@ -61,7 +61,7 @@ elif vista == "Panel Administrador":
     
     clave = st.text_input("Ingresa la clave de acceso", type="password")
     
-    if clave == "Mibu070996":
+    if clave == "Mibu0796":
         st.success("Acceso concedido.")
         
         # Creamos dos pestañas para organizar la vista
