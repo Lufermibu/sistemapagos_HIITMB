@@ -24,7 +24,7 @@ if vista == "Vista Cliente":
     st.title("Consulta tu Perfil")
     st.write("Ingresa tu número de teléfono para ver tu estatus:")
     
-    telefono_input = st.text_input("Número de teléfono", placeholder="Ej: 555-1234")
+    telefono_input = st.text_input("Número de teléfono", placeholder="Ej: 9211961723")
     
     if st.button("Entrar"):
         if telefono_input:
@@ -55,7 +55,7 @@ if vista == "Vista Cliente":
                 st.error("No se encontró ningún usuario con ese número.")
         else:
             st.warning("Por favor ingresa un número de teléfono.")
-# --- PANTALLA 2: LO QUE VE TU HERMANA ---
+# --- PANTALLA 2: ADMINISTRADOR---
 elif vista == "Panel Administrador":
     st.title("⚙️ Panel de Control")
     
@@ -146,7 +146,7 @@ elif vista == "Panel Administrador":
                     with colA:
                         # Preparamos el link de WhatsApp (asumiendo lada +52 de México)
                         numero_limpio = tel_cliente.replace("-", "").replace(" ", "")
-                        mensaje = f"Hola {nom_cliente}. Le escribo del local para recordarle que su mensualidad vence el {fecha_bonita}. ¡Lindo día!"
+                        mensaje = f"Hola {nom_cliente}. Le escribo de HIIT MB para recordarle que su mensualidad vence el {fecha_bonita}. ¡Lindo día! (Este es un mensaje automatizado) 🤖💪✨"
                         mensaje_codificado = urllib.parse.quote(mensaje)
                         link_wa = f"https://wa.me/52{numero_limpio}?text={mensaje_codificado}"
                         
