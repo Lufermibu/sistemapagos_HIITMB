@@ -194,10 +194,29 @@ elif vista == "Panel Administrador":
                         if st.button("Sí, eliminar permanentemente"):
                             supabase.table('clientes').delete().eq('id', id_borrar).execute()
                             st.rerun() 
+
+                    # --- FUNCIÓN 3: VENTANA PARA EDITAR DATOS ---
+                    @st.dialog("✏️ Editar Datos del Cliente")
+                    def editar_cliente(id_editar, nombre_actual, telefono_actual):
+                        st.write("Modifica los datos correspondientes:")
+                        
+                        # Pre-llenamos los campos con los datos actuales
+                        nuevo_nombre = st.text_input("Nombre del cliente", value=nombre_actual)
+                        nuevo_telefono = st.text_input("Teléfono", value=telefono_actual)
+                        
+                        if st.button("Guardar Cambios"):
+                            # Hacemos el UPDATE en Supabase usando el ID
+                            supabase.table('clientes').update({
+                                "nombre": nuevo_nombre,
+                                "telefono": nuevo_telefono
+                            }).eq('id', id_editar).execute()
+                            
+                            st.success("¡Datos actualizados!")
+                            st.rerun()
                     # ------------------------------------------------
                     
-                    # Dividimos en 3 columnas para que los botones quepan bien
-                    colA, colB, colC = st.columns(3)
+                    # Dividimos en 4 columnas para que los botones quepan bien
+                    colA, colB, colC, colD = st.columns(4)
                     
                     with colA:
                         numero_limpio = tel_cliente.replace("-", "").replace(" ", "")
@@ -211,12 +230,17 @@ elif vista == "Panel Administrador":
                         # Botón que llama a la ventana de renovación
                         if st.button("🔄 Renovar"):
                             renovar_pago(id_cliente, nom_cliente, monto_previo)
-                            
+                    
                     with colC:
+                        # NUEVO BOTÓN: Llama a la ventana de edición
+                        if st.button("✏️ Editar"):
+                            editar_cliente(id_cliente, nom_cliente, tel_cliente)
+                            
+                    with colD:
                         # Botón que llama a la ventana de confirmación
                         if st.button("❌ Eliminar"):
                             confirmar_borrado(id_cliente, nom_cliente)
-            else:
-                st.info("Aún no hay clientes registrados en la nube.")
-    elif clave != "":
-        st.error("Clave incorrecta. Acceso denegado.")
+                                else:
+                                    st.info("Aún no hay clientes registrados en la nube.")
+                        elif clave != "":
+                            st.error("Clave incorrecta. Acceso denegado.")
