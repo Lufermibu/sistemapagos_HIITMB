@@ -248,9 +248,10 @@ elif vista == "Panel Administrador":
                             renovar_pago(id_cliente, nom_cliente, monto_previo)
                     
                     with colC:
-                        # NUEVO BOTÓN: Llama a la ventana de edición
+                        # Llama a la ventana de edición mandándole el monto y la fecha que ya estaban guardados
                         if st.button("✏️ Editar"):
-                            editar_cliente(id_cliente, nom_cliente, tel_cliente)
+                            fecha_pago_actual = datos_cliente['fecha_pago']
+                            editar_cliente(id_cliente, nom_cliente, tel_cliente, monto_previo, fecha_pago_actual)
                             
                     with colD:
                         # Botón que llama a la ventana de confirmación
