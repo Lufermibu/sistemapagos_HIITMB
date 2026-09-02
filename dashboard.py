@@ -242,5 +242,5 @@ elif vista == "Panel Administrador":
                             confirmar_borrado(id_cliente, nom_cliente)
                         else:
                                     st.info("Aún no hay clientes registrados en la nube.")
-                        elif clave != "":
-                            st.error("Clave incorrecta. Acceso denegado.")
+elif clave != "":
+    st.error("Clave incorrecta. Acceso denegado.")
