@@ -240,7 +240,7 @@ elif vista == "Panel Administrador":
                         # Botón que llama a la ventana de confirmación
                         if st.button("❌ Eliminar"):
                             confirmar_borrado(id_cliente, nom_cliente)
-                                else:
+                        else:
                                     st.info("Aún no hay clientes registrados en la nube.")
                         elif clave != "":
                             st.error("Clave incorrecta. Acceso denegado.")
