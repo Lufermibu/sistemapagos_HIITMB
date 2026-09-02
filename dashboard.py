@@ -195,20 +195,36 @@ elif vista == "Panel Administrador":
                             supabase.table('clientes').delete().eq('id', id_borrar).execute()
                             st.rerun() 
 
-                    # --- FUNCIÓN 3: VENTANA PARA EDITAR DATOS ---
+                    # --- FUNCIÓN 3: VENTANA PARA EDITAR DATOS COMPLETOS ---
                     @st.dialog("✏️ Editar Datos del Cliente")
-                    def editar_cliente(id_editar, nombre_actual, telefono_actual):
+                    def editar_cliente(id_editar, nombre_actual, telefono_actual, monto_actual, fecha_pago_actual_str):
                         st.write("Modifica los datos correspondientes:")
                         
-                        # Pre-llenamos los campos con los datos actuales
+                        # Pre-llenamos los textos y números
                         nuevo_nombre = st.text_input("Nombre del cliente", value=nombre_actual)
                         nuevo_telefono = st.text_input("Teléfono", value=telefono_actual)
+                        nuevo_monto = st.number_input("Monto pagado", min_value=0.0, value=float(monto_actual), step=50.0)
+                        
+                        # Convertimos la fecha de la base de datos (texto) a un formato que el calendario entienda
+                        fecha_obj_actual = datetime.strptime(fecha_pago_actual_str, "%Y-%m-%d")
+                        nueva_fecha_pago = st.date_input("Fecha de pago", value=fecha_obj_actual) 
+                        
+                        # Para los días de ajuste, empezamos en 0 por default en la edición
+                        nuevos_dias_ajuste = st.number_input("Días de ajuste", value=0, step=1)
                         
                         if st.button("Guardar Cambios"):
-                            # Hacemos el UPDATE en Supabase usando el ID
+                            # RECALCULAMOS EL VENCIMIENTO POR SI CAMBIÓ LA FECHA
+                            vencimiento_base = calcular_proximo_mes(nueva_fecha_pago)
+                            vencimiento_final = vencimiento_base + timedelta(days=nuevos_dias_ajuste)
+                            
+                            # Hacemos el UPDATE de todos los campos
                             supabase.table('clientes').update({
                                 "nombre": nuevo_nombre,
-                                "telefono": nuevo_telefono
+                                "telefono": nuevo_telefono,
+                                "monto_pagado": nuevo_monto,
+                                "fecha_pago": nueva_fecha_pago.strftime("%Y-%m-%d"),
+                                "dias_ajuste": nuevos_dias_ajuste,
+                                "fecha_vencimiento": vencimiento_final.strftime("%Y-%m-%d")
                             }).eq('id', id_editar).execute()
                             
                             st.success("¡Datos actualizados!")
